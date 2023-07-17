@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 import matplotlib.pyplot as plt
-
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from cycler import cycler
+from itertools import cycle
 import seaborn as sns
 import numpy as np
 import pandas as pd
@@ -50,7 +50,9 @@ def plot(data, path, mode = 'line',
          callback = None, timeseries_stacked_right_legend_order=True, CDF_complementary=False, vlines=None, hlines=None, vlines_style={}, hlines_style={}):
 
     # 1. Create and configure plot visual style
-    mpl.rcParams.update(mpl.rcParamsDefault)
+    plt.rcParams.update(plt.rcParamsDefault)
+    plt.rcParams["interactive"]=True
+    
     plt.clf()
     plt.figure(figsize=figsize)
 
@@ -153,8 +155,20 @@ def plot(data, path, mode = 'line',
         #plt.boxplot(samples, labels=labels, sym=boxplot_sym, whis=boxplot_whis, **plot_args)
         
         #order = sorted(scenario_best["asn"].unique())
-        sns.boxplot(data=samples, whis=boxplot_whis, sym=boxplot_sym, ax=plt.gca(),
-                    palette= boxplot_palette, **plot_args)
+        if boxplot_empty:
+            props = {
+            'boxprops':{'facecolor':'none', 'edgecolor':'k'},
+            'medianprops':{'color':'k'},
+            'whiskerprops':{'color':'k'},
+            'capprops':{'color':'k'},
+            'linewidth':1 
+                }
+            sns.boxplot(data=samples, whis=boxplot_whis, sym=boxplot_sym, ax=plt.gca(),
+                        palette= boxplot_palette, **plot_args, **props)
+        else:
+            sns.boxplot(data=samples, whis=boxplot_whis, sym=boxplot_sym, ax=plt.gca(),
+                        palette= boxplot_palette, **plot_args)
+            
         plt.gca().set_xticklabels(labels)
         
         if boxplot_numerousness:
@@ -170,11 +184,7 @@ def plot(data, path, mode = 'line',
                                 size=boxplot_numerousness_fontsize,
                                 transform = plt.gca().get_xaxis_transform(),
                                 **args)
-                                
-        if boxplot_empty:
-            plt.setp(plt.gca().artists, edgecolor = 'k', facecolor='w', linewidth =1)
-            plt.setp(plt.gca().lines, color='k', linewidth =1)
-
+              
     elif mode == 'boxplot_multi':
         new_data = []
         for c in data:
@@ -214,7 +224,7 @@ def plot(data, path, mode = 'line',
         num_rows = len(data.index)
         num_columns = len(data.columns)
         bars_width_real=bars_width/num_columns
-        prop_iter = iter(plt.rcParams['axes.prop_cycle'])
+        prop_iter = cycle(plt.rcParams['axes.prop_cycle'])
         for i, column in enumerate( data ):
             delta = -bars_width/2 + i*bars_width_real + bars_width_real/2
             plt.bar( [e + delta for e in range(num_rows)], list(data[column]), linewidth = linewidth,
@@ -227,7 +237,7 @@ def plot(data, path, mode = 'line',
         xticks_labels_from_data = list(data.index)
         num_rows = len(data.index)
         num_columns = len(data.columns)
-        prop_iter = iter(plt.rcParams['axes.prop_cycle'])
+        prop_iter = cycle(plt.rcParams['axes.prop_cycle'])
         bottom = np.zeros(num_rows)
         for i, column in enumerate( data ):
             plt.bar(range(num_rows), list(data[column]), bottom=bottom, linewidth = linewidth,
